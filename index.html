@@ -351,6 +351,42 @@
     text-align: center;
   }
 
+  .auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    color: var(--text4);
+    font-size: 12px;
+  }
+  .auth-divider::before,
+  .auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .guest-btn {
+    width: 100%;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 450;
+    padding: 12px;
+    transition: all 0.2s var(--ease-out);
+    margin-top: 16px;
+  }
+  .guest-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-glow);
+  }
+
   /* BTN PRIMARY */
   .btn-primary {
     width: 100%;
@@ -1412,6 +1448,9 @@
       <button class="btn-primary" type="submit">Crear cuenta</button>
     </form>
 
+    <div class="auth-divider"><span>o</span></div>
+    <button class="guest-btn" id="guest-btn" type="button">Hablar sin iniciar sesión</button>
+
     <p class="auth-note">Demo local: los usuarios y chats se guardan en este navegador.</p>
   </section>
 </div>
@@ -1552,6 +1591,7 @@
   const STORAGE_CHATS_PREFIX = 'polai_chats_v1_';
   const STORAGE_ACTIVE_PREFIX = 'polai_active_chat_v1_';
   const STORAGE_SIDEBAR_COLLAPSED = 'polai_sidebar_collapsed_v1';
+  const GUEST_ID = '__guest__';
   const SYSTEM_PROMPT = `Eres PolAI, un asistente claro, util y amable.
 Responde siempre en el mismo idioma en el que te escriba el usuario.
 Si el usuario pregunta quien te creo, quien te hizo, quien es tu creador o algo equivalente, responde que te creo Pol Valero Garcia.
@@ -1575,6 +1615,7 @@ Si el usuario pide un texto para copiar, por ejemplo "dame el texto para copiar"
   const registerName = document.getElementById('register-name');
   const registerEmail = document.getElementById('register-email');
   const registerPassword = document.getElementById('register-password');
+  const guestBtn = document.getElementById('guest-btn');
   const currentUserEl = document.getElementById('current-user');
   const logoutBtn = document.getElementById('logout-btn');
   const chatSidebar = document.getElementById('chat-sidebar');
@@ -1619,6 +1660,7 @@ Si el usuario pide un texto para copiar, por ejemplo "dame el texto para copiar"
   registerTab.addEventListener('click', () => switchAuthMode('register'));
   loginForm.addEventListener('submit', handleLogin);
   registerForm.addEventListener('submit', handleRegister);
+  guestBtn.addEventListener('click', enterAsGuest);
 
   // Auto-resize textarea
   msgInput.addEventListener('input', () => {
@@ -1643,6 +1685,12 @@ Si el usuario pide un texto para copiar, por ejemplo "dame el texto para copiar"
 
     const users = loadUsers();
     const sessionUserId = localStorage.getItem(STORAGE_SESSION);
+
+    if (sessionUserId === GUEST_ID) {
+      enterApp(createGuestUser());
+      return;
+    }
+
     const savedUser = users.find(user => user.id === sessionUserId);
 
     if (savedUser) {
@@ -1749,6 +1797,15 @@ Si el usuario pide un texto para copiar, por ejemplo "dame el texto para copiar"
     renderMessages();
     msgInput.dispatchEvent(new Event('input'));
     msgInput.focus();
+  }
+
+  function createGuestUser() {
+    return { id: GUEST_ID, name: 'Invitado' };
+  }
+
+  function enterAsGuest() {
+    localStorage.setItem(STORAGE_SESSION, GUEST_ID);
+    enterApp(createGuestUser());
   }
 
   function showAuth() {
